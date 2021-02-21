@@ -16,12 +16,17 @@ qual_patients<-patients%>%
   select(PLASMA, Sexo, Quimioterapia,
          `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`,
          Neumonia, `Antecedente de Trasplante de CPH`, Quimioterapia,
-         EPOC, Obesidad, HTA, DIABETES, UTI, ARM)%>%
+         EPOC, Obesidad, HTA, DIABETES, UTI, ARM)
+
+#defining the events
+events<-c("SI","Mujer","En Remisión")
+
+#wrangling the columns and translating the events
+is_event<-function(x){ifelse(is.na(x),x,x%in%events)}
+qual_patients<-qual_patients%>%
   mutate_if(is.numeric,as.logical)%>%
-  mutate(PLASMA=PLASMA=="SI",Sexo=Sexo=="Mujer",
-         Quimioterapia=Quimioterapia=="SI", `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`=`Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`!="En Remisión",
-         Neumonia=Neumonia=="SI", UTI=UTI=="SI", ARM=ARM=="SI", 
-         `Antecedente de Trasplante de CPH`=`Antecedente de Trasplante de CPH`=="SI")
+  mutate_if(is.character,is_event)%>%
+  mutate_if(is.character,as.logical)
 
 #calculating the proportions for each variable by PLASMA
 mean_na_rm<-function(x){mean(x,na.rm=TRUE)}
