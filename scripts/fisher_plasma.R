@@ -12,17 +12,20 @@ patients<-read_csv(path_name)
 
 #selecting qualitative variables and wrangling into booleans
 qual_patients<-patients%>%
-  select(PLASMA, Sexo, Quimioterapia,
-         `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`,
-         Neumonia, `Antecedente de Trasplante de CPH`, 
-         Quimioterapia, EPOC, Obesidad, HTA, DIABETES, UTI, ARM)
+  select(PLASMA, Sexo,`Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`,
+         Neumonia, `Antecedente de Trasplante de CPH`,
+         `TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`,
+         Quimioterapia, EPOC, Obesidad, HTA, DIABETES, 
+         UTI, ARM, Evolucion)
 
 #defining the events
-events<-c("SI","Mujer","En Remisión")
+events<-c("SI","Mujer","En Remisión","Fallecido")
 
 #wrangling the columns and translating the events
 is_event<-function(x){ifelse(is.na(x),x,x%in%events)}
 qual_patients<-qual_patients%>%
+  mutate(`TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`=
+           `TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`-1)%>%
   mutate_if(is.numeric,as.logical)%>%
   mutate_if(is.character,is_event)%>%
   mutate_if(is.character,as.logical)
@@ -55,19 +58,33 @@ not_qual_patients<-qual_patients%>%
 events_plus_not_qual<-bind_rows(
   events_qual_patients, not_qual_patients)
 
-#building the function for fisher test to use in summerise_all
-fisher_test_for_columns<-function(x){
+#building the function for the odds ratio to use in summerise_all
+odds_ratio_for_columns<-function(x){
   table2by2<-matrix(x,2,2)
   test<-fisher.test(table2by2)
-  test$p.value
+  test$estimate
 }
 
-#applying fisher to every variable by PLASMA
-fisher_qual_patients<-events_plus_not_qual%>%
+#obtaining the p value of the fisher test for every variable by PLASMA
+fisher_PLASMA<-events_plus_not_qual%>%
   select(-PLASMA)%>%
-  summarise_all(fisher_test_for_columns)
+  summarise_all(fisher_test_for_columns_p)
+
+#obtaining the odds ratio for every variable by PLASMA
+odds_PLASMA<-events_plus_not_qual%>%
+  select(-PLASMA)%>%
+  summarise_all(odds_ratio_for_columns)
+
+#binding the odd ratios and the p values
+final_PLASMA<-bind_rows(
+  odds_PLASMA,fisher_PLASMA)
+
+#adding the row names
+final_PLASMA<-final_PLASMA%>%
+  mutate(late_vs_early=c("OR","p"))
+view(final_PLASMA)
 
 #exporting the results
 fisher_path<-file.path("./exports","fisher_PLASMA.xlsx")
-write_xlsx(fisher_qual_patients,fisher_path)
+write_xlsx(final_PLASMA,fisher_path)
 

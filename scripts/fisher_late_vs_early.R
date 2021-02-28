@@ -12,21 +12,30 @@ patients<-read_csv(path_name)
 
 #selecting qualitative variables and wrangling into booleans
 qual_patients<-patients%>%
-  select(PLASMA, `Infusion temprana 1 tardia 0`, Sexo, Quimioterapia,
+  select(PLASMA, `Infusion temprana 1 tardia 0`, Sexo,
          `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`,
          Neumonia, `Antecedente de Trasplante de CPH`, 
-         Quimioterapia, EPOC, Obesidad, HTA, DIABETES, UTI, ARM)
-
+         Neutropenia, HIPOGAMA, Dexametasona, Coinfeccion, 
+         `TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`,
+         Metilprednisolona, `canula 02 en infusion`, 
+         Quimioterapia, EPOC, Obesidad, HTA, DIABETES, 
+         UTI, ARM, Evolucion)
 
 #defining the events
-events<-c("SI","Mujer","En Remisión")
+events<-c("SI","Mujer","En Remisión","Fallecido")
 
 #wrangling the columns and translating the events
 is_event<-function(x){ifelse(is.na(x),x,x%in%events)}
 qual_patients<-qual_patients%>%
+  mutate(Viral= Coinfeccion == "BACTERIANA + VIRAL", 
+         Bacteriana = Coinfeccion %in% c( "BACTERIANA + VIRAL", 
+                                          "BACTERIANA"))%>%
+  mutate(`TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`=
+           `TIPO TRASPLANTE EST AUTOLOGO 1 ALOGENICO 2`-1)%>%
   mutate_if(is.numeric,as.logical)%>%
   mutate_if(is.character,is_event)%>%
   mutate_if(is.character,as.logical)
+
 
 #filtering the patients that received `Infusion temprana 1 tardia 0`
 qual_patients<-qual_patients%>%
@@ -61,7 +70,6 @@ not_qual_patients<-qual_patients%>%
 events_plus_not_qual<-bind_rows(
   events_qual_patients, not_qual_patients)
 
-
 #building the function for fisher test to use in summerise_all
 fisher_test_for_columns_p<-function(x){
   table2by2<-matrix(x,2,2)
@@ -69,7 +77,7 @@ fisher_test_for_columns_p<-function(x){
   test$p.value
 }
 
-#building the function for fisher test to use in summerise_all
+#building the function for the odds ratio to use in summerise_all
 odds_ratio_for_columns<-function(x){
   table2by2<-matrix(x,2,2)
   test<-fisher.test(table2by2)
@@ -91,10 +99,10 @@ final_late_vs_early<-bind_rows(
   odds_late_vs_early,fisher_late_vs_early)
 
 #adding the row names
-row_names<-data.frame(late_vs_early)
 final_late_vs_early<-final_late_vs_early%>%
   mutate(late_vs_early=c("OR","p"))
 
 #exporting the results
 fisher_path<-file.path("./exports","fisher_late_vs_early.xlsx")
 write_xlsx(final_late_vs_early,fisher_path)
+
