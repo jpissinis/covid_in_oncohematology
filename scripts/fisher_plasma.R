@@ -68,6 +68,6 @@ fisher_qual_patients<-events_plus_not_qual%>%
   summarise_all(fisher_test_for_columns)
 
 #exporting the results
-fisher_path<-file.path("./exports","fisher_plasma.xlsx")
+fisher_path<-file.path("./exports","fisher_PLASMA.xlsx")
 write_xlsx(fisher_qual_patients,fisher_path)
 
