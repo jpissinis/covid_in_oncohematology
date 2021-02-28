@@ -9,14 +9,13 @@ library(writexl)
 #loading the data as patients
 path_name<-file.path("./raw","patients.csv")
 patients<-read_csv(path_name)
-str(patients)
 
 #selecting qualitative variables and wrangling into booleans
 qual_patients<-patients%>%
   select(PLASMA, Sexo, Quimioterapia,
          `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`,
-         Neumonia, `Antecedente de Trasplante de CPH`, Quimioterapia,
-         EPOC, Obesidad, HTA, DIABETES, UTI, ARM)
+         Neumonia, `Antecedente de Trasplante de CPH`, 
+         Quimioterapia, EPOC, Obesidad, HTA, DIABETES, UTI, ARM)
 
 #defining the events
 events<-c("SI","Mujer","En Remisión")
@@ -28,25 +27,29 @@ qual_patients<-qual_patients%>%
   mutate_if(is.character,is_event)%>%
   mutate_if(is.character,as.logical)
 
+#grouping by the comparison variable
+qual_patients<-qual_patients%>%
+  group_by(PLASMA)
+
 #calculating the proportions for each variable by PLASMA
-mean_na_rm<-function(x){mean(x,na.rm=TRUE)}
+mean_na_rm<-function(x){mean(x,na.rm=T)}
 prop_qual_patients<-qual_patients%>%
-  group_by(PLASMA)%>%summarise_all(mean_na_rm)
+  summarise_all(mean_na_rm)
 
 #calculating the events for each variable by PLASMA
 sum_na_rm<-function(x){sum(x,na.rm=T)}
 events_qual_patients<-qual_patients%>%
-  group_by(PLASMA)%>%summarise_all(sum_na_rm)
+  summarise_all(sum_na_rm)
 
 #calculating the length for each variable by PLASMA
 length_na_rm<-function(x){sum(!is.na(x))}
 length_qual_patients<-qual_patients%>%
-  group_by(PLASMA)%>%summarise_all(length_na_rm)
+  summarise_all(length_na_rm)
 
 #calculating the length for each variable by PLASMA
 not_event<-function(x){sum(!x,na.rm=T)}
 not_qual_patients<-qual_patients%>%
-  group_by(PLASMA)%>%summarise_all(not_event)
+  summarise_all(not_event)
 
 #constructing the table with the events and not events by PLASMA
 events_plus_not_qual<-bind_rows(

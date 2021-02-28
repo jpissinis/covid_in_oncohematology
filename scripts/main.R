@@ -22,6 +22,7 @@ qual_patients<-patients%>%
          Quimioterapia=Quimioterapia=="SI", `Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`=`Estado de la Enfermedad al Momento de la Infeccion por SARS-CoV2`!="En Remisión",
          Neumonia=Neumonia=="SI", UTI=UTI=="SI", ARM=ARM=="SI", 
          `Antecedente de Trasplante de CPH`=`Antecedente de Trasplante de CPH`=="SI")
+sum(qual_patients$Neumonia, na.rm=T)
 
 #calculating the proportions for each variable by PLASMA
 mean_na_rm<-function(x){mean(x,na.rm=TRUE)}
