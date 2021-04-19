@@ -22,7 +22,7 @@ events<-c("SI")
 
 #wrangling the columns and translating the events
 is_event<-function(x){ifelse(is.na(x),x,x%in%events)}
-comorbitities_patients<-comorbidities_patients%>%
+comorbidities_patients<-comorbidities_patients%>%
   mutate_if(is.numeric,as.logical)%>%
   mutate_if(is.character,is_event)%>%
   mutate_if(is.character,as.logical)
@@ -46,12 +46,20 @@ median_comorbidities_patients<-comorbidities_patients%>%
   select(PLASMA,N_comorbilidades)%>%summarise_all(median_na_rm)
 median_comorbidities_patients
 
-IQR(comorbidities_patients$N_comorbilidades)
-?IQR
-quantile(comorbidities_patients$N_comorbilidades,0.75)
-
-#plotting the number of comorbidities
-quant_patients%>%select(N_comorbilidades,PLASMA)%>%
-  ggplot(aes(N_comorbilidades,fill=PLASMA,alpha=0.5))+
+#plotting the number of comorbidities as histogram
+comorbidities_patients%>%select(N_comorbilidades,PLASMA)%>%
+  ggplot(aes(N_comorbilidades,fill=PLASMA),alpha=0.5)+
   geom_histogram(binwidth = 1)
 
+#plotting the number of comorbidities as a boxplot
+comorbidities_patients%>%select(N_comorbilidades,PLASMA)%>%
+  ggplot(aes(N_comorbilidades,fill=PLASMA),alpha=0.5)+
+  geom_boxplot()
+
+#conducting the Mann Whitney test
+N_comorb_PLASMA_YES<-comorbidities_patients%>%filter(PLASMA==T)
+N_comorb_PLASMA_YES<-N_comorb_PLASMA_YES$N_comorbilidades
+N_comorb_PLASMA_NO<-comorbidities_patients%>%filter(PLASMA==F)
+N_comorb_PLASMA_NO<-N_comorb_PLASMA_NO$N_comorbilidades
+N_comorb_PLASMA_NO
+wilcox.test(N_comorb_PLASMA_YES,N_comorb_PLASMA_NO)
