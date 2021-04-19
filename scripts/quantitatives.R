@@ -53,5 +53,5 @@ quantile(comorbidities_patients$N_comorbilidades,0.75)
 #plotting the number of comorbidities
 quant_patients%>%select(N_comorbilidades,PLASMA)%>%
   ggplot(aes(N_comorbilidades,fill=PLASMA,alpha=0.5))+
-  geom_density()
+  geom_histogram(binwidth = 1)
 
